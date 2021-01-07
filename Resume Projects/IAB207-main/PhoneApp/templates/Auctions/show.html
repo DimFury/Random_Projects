@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block content %}
+<div class="container mt-3">
+    {% if auction != None %}
+    <div class="row mt-2">
+        <div class="col ml-2">
+            <div class="text-center">
+                <!--image size & border-->
+                <style>
+                    @media screen and (max-width: 767px) {
+                        #main-img {
+                                {
+                                    {
+                                    auction.image
+                                }
+                            }
+
+
+                        }
+                </style>
+                <picture style="position:relative; left:0px; top:25px;">
+                    <img src="{{auction.image}}" class="image" srcset="{{auction.image}} 5000w"
+                        style="border:5px solid black" style=".image;margin:50px 0px">
+                </picture>
+            </div>
+        </div>
+        <!--This is a card showing bid information including Add to watchlist button-->
+        <div class="col mt-0.5">
+            <div class="itemcard bg-light mb-3" style="position:relative; left: 0px; top:25px;">
+                <div class="card-header h3">{{auction.title}}</div>
+                <div class="card-body">
+                    <p class="card-text">Starting bid: {{ starting_bid }}</p>
+                    <h5 class="card-title">Current bid: {{ current_bid }}</h5>
+                    <p class="card-text">{{ bid_number }} bids</p>
+                    {% if auction.status == 'Active' %}
+                    <!--Only show time if the auction is 'Active'-->
+                    <p class="card-text">{{timeleft}} left</p>
+                    {% endif %}
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                    <div class="row mt-3 mb-3">
+                        {% for category, message in messages %}
+                        <div class="alert-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% endwith%}
+
+                    <!--Disable bid form/function also Watchlist button if the person looking at this page created this auction-->
+                    <!--Place bid form-->
+                    {% if auction.user_id != current_user.id %}
+                    <!--Disable bid form if the auction has been closed-->
+                    {% if auction.status == 'Active' %}
+                    <form class="form-inline" action="/auctions/{{auction.id}}/bid" method="POST" class="form"
+                        role="form">
+                        {{ bid_form.csrf_token() }}
+
+                        <div class="form-group mb-2">
+                            {{ wtf.form_field(bid_form.bid_amount, placeholder="AUD") }}
+
+                        </div>
+                        <button type="submit" id="place" name="place" class="btn btn-dark mb-2 ml-2">Place Bid</button>
+                    </form>
+                    <div>
+                        <p class="text-muted">(Enter AU ${{priceControl}} or more)</p>
+                    </div>
+                    <!--End of Place bid form-->
+
+                    <!--Add to Watchlist button-->
+                    <form action="/watchlists/{{(auction.id)}}/add" method="POST" class="form" role="form">
+                        {{ watchlist.csrf_token() }}
+                        <button type="submit" id="add" name="add"
+                            class="btn btn-outline-dark">{{add_to_watchlist_button}}</button>
+                    </form>
+                    <!--End of Add to Watchlist button-->
+
+                    <!--If the auction has been closed-->
+                    {% else %}
+                    <div class="alert alert-danger" role="alert">
+                        The auction has been closed!
+                    </div>
+                    {% if won_user != None %}
+                    <div class="alert alert-success" role="alert">
+                        This user that won this auction is <strong>"{{won_user}}"</strong>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success" role="alert">
+                        <strong>No one</strong> had placed bid while the auction was active.
+                    </div>
+                    {% endif %}
+
+                    {% endif %}
+
+
+
+
+                    <!-----------------------If the user viewing created the auction---------------------------->
+                    {% else %}
+
+                    {% if auction.status != 'Active'%}
+                    <div class="alert alert-danger" role="alert">
+                        The auction has been closed!
+                    </div>
+                    {% if won_user != None %}
+                    <div class="alert alert-success" role="alert">
+                        This user that won this auction is <strong>"{{won_user}}"</strong>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success" role="alert">
+                        <strong>No one</strong> had placed bid while the auction was active.
+                    </div>
+                    {% endif %}
+
+                    {% endif %}
+                    <!--The person who created this auction will be able to see all the bids instead-->
+                    <!--Aleart message-->
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        <strong>This is the auction you created</strong>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <!--End of Aleart message-->
+                    <!--The Table showing all bids that have been made-->
+                    <div>
+                        <p>
+                            <a class="btn btn-secondary btn-lg btn-block" data-toggle="collapse" href="#collapseExample"
+                                role="button" aria-expanded="false" aria-controls="collapseExample">
+                                <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-box-arrow-down"
+                                    fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd"
+                                        d="M3.5 10a.5.5 0 0 1-.5-.5v-8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 0 0 1h2A1.5 1.5 0 0 0 14 9.5v-8A1.5 1.5 0 0 0 12.5 0h-9A1.5 1.5 0 0 0 2 1.5v8A1.5 1.5 0 0 0 3.5 11h2a.5.5 0 0 0 0-1h-2z" />
+                                    <path fill-rule="evenodd"
+                                        d="M7.646 15.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 14.293V5.5a.5.5 0 0 0-1 0v8.793l-2.146-2.147a.5.5 0 0 0-.708.708l3 3z" />
+                                </svg>
+                                View all Bids
+                            </a>
+                        </p>
+                        <div class="collapse" id="collapseExample">
+                            <div class="card card-body">
+                                <table class="table table-dark">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">#</th>
+                                            <th scope="col">username</th>
+                                            <th scope="col">bid amount</th>
+                                            <th scope="col">bid date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for bid in all_bids %}
+                                        <tr>
+                                            <th scope="row">{{bid.count}}</th>
+                                            <td>{{bid.user.name}}</td>
+                                            <td>${{bid.bid_amount}}</td>
+                                            <td>{{bid.bid_date.strftime('%d/%m/%Y %H:%M')}}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!--End of the table-->
+
+
+
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+        <!--End of bidding card-->
+
+
+        <div class="row mt-2">
+
+
+            <div class="container" style="position:relative; left: 0px; top:25px;">
+                <!-- Nav pills -->
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link active" id="description-tab" data-toggle="tab" href="#description" role="tab"
+                            aria-controls="description" aria-selected="true">Description</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="review-tab" data-toggle="tab" href="#review" role="tab"
+                            aria-controls="review" aria-selected="false">Review</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="contact-tab" data-toggle="tab" href="#delivery" role="tab"
+                            aria-controls="delivery" aria-selected="false">Delivery</a>
+                    </li>
+                </ul>
+                <!-- Tab panes -->
+                <div class="tab-content">
+                    <div id="description" class="container tab-pane active"><br>
+                        <h3>Description</h3>
+                        <p>{{auction.description}}</p>
+                    </div>
+                    <!-- Review tab -->
+                    <div id="review" class="container tab-pane fade"><br>
+                        <h3>Review</h3>
+
+                        {% for review in auction.reviews %}
+                        <div class="row border-bottom">
+                            <div class="col-md-12">
+                                <b>{{ review.user.name }} <span
+                                        class="ml-2 text-muted">{{ (review.created_at.strftime('%d %B %Y')) }}</span></b>
+                                <p>{{ review.text }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        <form class="form" action="/auctions/{{auction.id}}/review" method="POST" class="form"
+                            role="form">
+                            {{ review_form.csrf_token() }}
+
+                            {{ wtf.form_field(review_form.review ) }}
+
+                            <button type="submit" id="review" name="review" class="btn btn-outline-dark">Write
+                                Review</button>
+                        </form>
+                        <!-- <p> tantan77 (9 months ago)</p>
+                    <p>Li Europan lingues es membres del sam familie. Lor separat existentie es un myth. Por
+                        scientie,
+                        musica, sport etc, litot Europa usa li sam vocabular. Li lingues differe solmen in li
+                        grammatica, li pronunciation e li plu commun vocabules. Omnicos directe al desirabilite de
+                        un
+                        nov lingua franca: On refusa continuar payar custosi traductores.</p>
+                    
+                    <form>
+                        <div class="form-group">
+                            <label for="exampleFormControlTextarea1">Write a review</label>
+                            <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+                            <button type="submit" class="btn btn-outline-dark mt-2">Submit</button>
+                        </div>
+                    </form> -->
+                    </div>
+                    <div id="delivery" class="container tab-pane fade"><br>
+                        <h3>Delivery Information</h3>
+                        <p>
+                            Delivery time frames will depend on your location, please check the shipping calculator
+                            to
+                            see
+                            an estimate of when you can typically expect to receive your goods based on your
+                            postcode.
+
+                            We will send you an email notifying you as soon as your items have left our warehouse.
+
+                            In this email, you will find the name of the courier company and the consignment note
+                            number
+                            of
+                            your item as well as information on tracking the delivery of your item online. Simply
+                            follow
+                            the
+                            link and enter your reference number. You will then be able to quickly and efficiently
+                            track
+                            the
+                            delivery status of your item!
+
+                            Please Note: Your goods will be delivered to your registered address. We do delivery
+                            Australia
+                            wide except for a few remote territories, please check the shipping calculator to
+                            confirm
+                            delivery availability and timeframes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="container mt-3">
+        <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading">Not Found Sorry!</h4>
+            <p>The item you're looking for does not exist at the moment.</p>
+            <hr>
+            <p class="mb-0">Please come back later.</p>
+        </div>
+    </div>
+    {% endif%}
+</div>
+
+
+{% endblock %}
